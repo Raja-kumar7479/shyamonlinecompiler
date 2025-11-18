@@ -7,3 +7,4 @@ mysql-connector-python
 docker>=6.0.0
 pyjwt
 bcrypt
+gunicorn==20.1.0
