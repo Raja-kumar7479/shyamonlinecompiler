@@ -1,0 +1,171 @@
+2025-11-17 15:34:40,037 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 15:34:40,037 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 15:35:18,658 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 15:35:18,658 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 15:36:24,568 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 15:36:24,569 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 15:37:12,247 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:37:12] "GET / HTTP/1.1" 200 -
+2025-11-17 15:37:12,912 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:37:12] "GET /static/js/app.js HTTP/1.1" 200 -
+2025-11-17 15:37:12,977 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:37:12] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-11-17 15:37:13,434 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:37:13] "GET /api/csrf-token HTTP/1.1" 200 -
+2025-11-17 15:37:14,144 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:37:14] "GET /api/problems?page=1&page_size=50 HTTP/1.1" 200 -
+2025-11-17 15:37:21,657 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_lfugo7uy: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_lfugo7uy\\Main.java'
+2025-11-17 15:37:21,666 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:37:21] "POST /api/run HTTP/1.1" 200 -
+2025-11-17 15:37:24,256 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:37:24] "GET /api/problem/palindrome-number HTTP/1.1" 200 -
+2025-11-17 15:38:18,140 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_700elvx6: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_700elvx6\\Main.java'
+2025-11-17 15:38:18,146 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:38:18] "POST /api/run HTTP/1.1" 200 -
+2025-11-17 15:40:12,517 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 15:40:12,518 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 15:50:45,676 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 15:50:45,685 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 15:56:41,991 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 15:56:41,993 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 15:56:47,778 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 15:56:47,778 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 15:56:54,632 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:56:54] "GET / HTTP/1.1" 200 -
+2025-11-17 15:56:55,026 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:56:55] "GET /static/js/app.js HTTP/1.1" 200 -
+2025-11-17 15:56:55,167 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:56:55] "GET /api/csrf-token HTTP/1.1" 200 -
+2025-11-17 15:56:55,732 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:56:55] "GET /api/problems?page=1&page_size=50 HTTP/1.1" 200 -
+2025-11-17 15:57:03,288 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_x_sm8bfu on first attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_x_sm8bfu\\Main.java'
+2025-11-17 15:57:03,789 ERROR root Failed to remove temp directory C:\Users\HP\AppData\Local\Temp\exec_x_sm8bfu on second attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_x_sm8bfu\\Main.java'
+2025-11-17 15:57:03,795 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:57:03] "POST /api/run HTTP/1.1" 200 -
+2025-11-17 15:57:06,435 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:57:06] "GET /api/problem/palindrome-number HTTP/1.1" 200 -
+2025-11-17 15:57:19,370 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:57:19] "GET /api/problems?page=1&page_size=50&difficulty=easy HTTP/1.1" 200 -
+2025-11-17 15:57:20,400 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:57:20] "GET /api/problem/palindrome-number HTTP/1.1" 200 -
+2025-11-17 15:57:39,035 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_n1taqqjk on first attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_n1taqqjk\\Main.java'
+2025-11-17 15:57:39,536 ERROR root Failed to remove temp directory C:\Users\HP\AppData\Local\Temp\exec_n1taqqjk on second attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_n1taqqjk\\Main.java'
+2025-11-17 15:57:39,543 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:57:39] "POST /api/run HTTP/1.1" 200 -
+2025-11-17 15:57:52,899 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:57:52] "GET /api/submissions HTTP/1.1" 200 -
+2025-11-17 15:58:12,476 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_sqi7c95o on first attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_sqi7c95o\\app.py'
+2025-11-17 15:58:12,977 ERROR root Failed to remove temp directory C:\Users\HP\AppData\Local\Temp\exec_sqi7c95o on second attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_sqi7c95o\\app.py'
+2025-11-17 15:58:13,509 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_g_ekfs86 on first attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_g_ekfs86\\app.py'
+2025-11-17 15:58:14,010 ERROR root Failed to remove temp directory C:\Users\HP\AppData\Local\Temp\exec_g_ekfs86 on second attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_g_ekfs86\\app.py'
+2025-11-17 15:58:14,600 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_0o7l8kjw on first attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_0o7l8kjw\\app.py'
+2025-11-17 15:58:15,101 ERROR root Failed to remove temp directory C:\Users\HP\AppData\Local\Temp\exec_0o7l8kjw on second attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_0o7l8kjw\\app.py'
+2025-11-17 15:58:15,668 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_9nl749vg on first attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_9nl749vg\\app.py'
+2025-11-17 15:58:16,169 ERROR root Failed to remove temp directory C:\Users\HP\AppData\Local\Temp\exec_9nl749vg on second attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_9nl749vg\\app.py'
+2025-11-17 15:58:16,176 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:58:16] "POST /api/run HTTP/1.1" 200 -
+2025-11-17 15:58:47,263 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 15:58:47,263 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 15:58:53,443 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:58:53] "GET / HTTP/1.1" 200 -
+2025-11-17 15:58:53,770 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:58:53] "GET /static/js/app.js HTTP/1.1" 200 -
+2025-11-17 15:58:54,051 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:58:54] "GET /api/csrf-token HTTP/1.1" 200 -
+2025-11-17 15:58:54,387 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:58:54] "GET /api/problems?page=1&page_size=50 HTTP/1.1" 200 -
+2025-11-17 15:58:56,608 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:58:56] "GET /api/problem/palindrome-number HTTP/1.1" 200 -
+2025-11-17 15:59:06,165 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_s4j3uwyv on first attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_s4j3uwyv\\app.py'
+2025-11-17 15:59:06,667 ERROR root Failed to remove temp directory C:\Users\HP\AppData\Local\Temp\exec_s4j3uwyv on second attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_s4j3uwyv\\app.py'
+2025-11-17 15:59:07,252 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_upsqe32t on first attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_upsqe32t\\app.py'
+2025-11-17 15:59:07,755 ERROR root Failed to remove temp directory C:\Users\HP\AppData\Local\Temp\exec_upsqe32t on second attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_upsqe32t\\app.py'
+2025-11-17 15:59:08,330 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_9jpz8iph on first attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_9jpz8iph\\app.py'
+2025-11-17 15:59:08,831 ERROR root Failed to remove temp directory C:\Users\HP\AppData\Local\Temp\exec_9jpz8iph on second attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_9jpz8iph\\app.py'
+2025-11-17 15:59:09,377 WARNING root Could not remove temp directory C:\Users\HP\AppData\Local\Temp\exec_8nfllgwr on first attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_8nfllgwr\\app.py'
+2025-11-17 15:59:09,880 ERROR root Failed to remove temp directory C:\Users\HP\AppData\Local\Temp\exec_8nfllgwr on second attempt: [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_8nfllgwr\\app.py'
+2025-11-17 15:59:09,886 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 15:59:09] "POST /api/run HTTP/1.1" 200 -
+2025-11-17 16:02:55,030 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 16:02:55,031 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 16:03:28,875 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 16:03:28,876 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 16:03:36,539 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:03:36] "GET / HTTP/1.1" 200 -
+2025-11-17 16:03:36,712 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:03:36] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+2025-11-17 16:03:36,795 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:03:36] "GET /api/csrf-token HTTP/1.1" 200 -
+2025-11-17 16:03:37,129 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:03:37] "GET /api/problems?page=1&page_size=50 HTTP/1.1" 200 -
+2025-11-17 16:04:18,553 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 16:04:18,553 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 16:04:25,067 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:04:25] "GET / HTTP/1.1" 200 -
+2025-11-17 16:04:25,168 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:04:25] "GET /static/js/app.js HTTP/1.1" 200 -
+2025-11-17 16:04:25,279 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:04:25] "GET /api/csrf-token HTTP/1.1" 200 -
+2025-11-17 16:04:25,359 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:04:25] "GET /api/problems?page=1&page_size=50 HTTP/1.1" 200 -
+2025-11-17 16:04:27,308 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:04:27] "GET /api/problem/palindrome-number HTTP/1.1" 200 -
+2025-11-17 16:04:57,893 WARNING root Permission error removing C:\Users\HP\AppData\Local\Temp\exec_nx2fcjz1 (attempt 1): [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_nx2fcjz1\\app.py'
+2025-11-17 16:05:00,278 WARNING root Permission error removing C:\Users\HP\AppData\Local\Temp\exec_3zqxi1ba (attempt 1): [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_3zqxi1ba\\app.py'
+2025-11-17 16:05:02,395 WARNING root Permission error removing C:\Users\HP\AppData\Local\Temp\exec_z2511zvf (attempt 1): [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_z2511zvf\\app.py'
+2025-11-17 16:05:04,508 WARNING root Permission error removing C:\Users\HP\AppData\Local\Temp\exec_33dmockt (attempt 1): [WinError 5] Access is denied: 'C:\\Users\\HP\\AppData\\Local\\Temp\\exec_33dmockt\\app.py'
+2025-11-17 16:05:05,524 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:05:05] "POST /api/run HTTP/1.1" 200 -
+2025-11-17 16:05:31,575 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 16:05:31,576 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 16:05:38,854 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:05:38] "GET / HTTP/1.1" 200 -
+2025-11-17 16:05:39,038 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:05:39] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+2025-11-17 16:05:39,279 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:05:39] "GET /api/csrf-token HTTP/1.1" 200 -
+2025-11-17 16:05:39,424 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:05:39] "GET /api/problems?page=1&page_size=50 HTTP/1.1" 200 -
+2025-11-17 16:05:44,864 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:05:44] "POST /api/run HTTP/1.1" 200 -
+2025-11-17 16:05:46,529 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:05:46] "GET /api/problem/palindrome-number HTTP/1.1" 200 -
+2025-11-17 16:06:00,889 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 16:06:00,889 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 16:06:06,983 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:06:06] "GET / HTTP/1.1" 200 -
+2025-11-17 16:06:07,269 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:06:07] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+2025-11-17 16:06:07,720 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:06:07] "GET /api/csrf-token HTTP/1.1" 200 -
+2025-11-17 16:06:08,016 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:06:08] "GET /api/problems?page=1&page_size=50 HTTP/1.1" 200 -
+2025-11-17 16:06:09,135 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:06:09] "GET /api/problem/palindrome-number HTTP/1.1" 200 -
+2025-11-17 16:07:04,542 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:07:04] "POST /api/run HTTP/1.1" 200 -
+2025-11-17 16:07:28,759 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.201:5000
+2025-11-17 16:07:28,760 INFO werkzeug [33mPress CTRL+C to quit[0m
+2025-11-17 16:07:35,573 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:07:35] "GET / HTTP/1.1" 200 -
+2025-11-17 16:07:36,068 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:07:36] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+2025-11-17 16:07:36,182 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:07:36] "GET /api/csrf-token HTTP/1.1" 200 -
+2025-11-17 16:07:36,443 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:07:36] "GET /api/problems?page=1&page_size=50 HTTP/1.1" 200 -
+2025-11-17 16:07:37,650 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:07:37] "GET /api/problem/palindrome-number HTTP/1.1" 200 -
+2025-11-17 16:08:21,385 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:08:21] "GET / HTTP/1.1" 200 -
+2025-11-17 16:08:21,598 INFO werkzeug 127.0.0.1 - - [17/Nov/2025 16:08:21] "GET /static/js/app.js HTTP/1.1" 200 -
+2025-11-19 00:23:45,356 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.48.100.201:5000
+2025-11-19 00:23:45,357 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-11-19 00:23:49,324 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.48.100.201:5000
+2025-11-19 00:23:49,324 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-11-19 00:24:01,363 - request - INFO - GET / - 127.0.0.1
+2025-11-19 00:24:01,622 - __main__ - INFO - Request processed in 0.259s - Status: 200
+2025-11-19 00:24:01,628 - werkzeug - INFO - 127.0.0.1 - - [19/Nov/2025 00:24:01] "GET / HTTP/1.1" 200 -
+2025-11-19 00:24:31,922 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.48.100.201:5000
+2025-11-19 00:24:31,927 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-11-19 00:24:44,350 - request - INFO - GET / - 127.0.0.1
+2025-11-19 00:24:44,387 - __main__ - INFO - Request processed in 0.034s - Status: 200
+2025-11-19 00:24:44,395 - werkzeug - INFO - 127.0.0.1 - - [19/Nov/2025 00:24:44] "GET / HTTP/1.1" 200 -

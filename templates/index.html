@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeJudge Pro - Robust Compiler Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.15.2/ace.js"></script>
+  <style>
+    /* Custom CSS Variables and Base Styles */
+    :root { 
+        --primary-color: #3b82f6; 
+        --primary-light: #60a5fa; 
+        --primary-dark: #1e40af; 
+        --editor-bg: #1e1e1e; 
+        --editor-text: #d4d4d4; 
+        --results-panel-height: 250px;
+        --success-bg: #14351b;
+        --success-text: #3cb371;
+        --failure-bg: #401f1f;
+        --failure-text: #c84040;
+        --text-color: #e5e7eb;
+        --deploy-fail-bg: #40301f; /* Dark Yellow/Orange for DEP */
+        --deploy-fail-text: #d49942; /* Medium Orange */
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { background-color: #f3f4f6; overflow: hidden; }
+    .main-grid { display: grid; grid-template-rows: 64px 1fr; height: 100vh; }
+
+    .compiler-grid { display: grid; grid-template-columns: 1fr 1fr; height: 100%; }
+    .editor-container { background-color: var(--editor-bg); display: flex; flex-direction: column; }
+    .ace-editor-wrapper { flex-grow: 1; position: relative; min-height: 100px; }
+    .ace_editor { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
+    .results-panel { flex-shrink: 0; height: var(--results-panel-height); min-height: 40px; }
+    
+    #results-resize-handle {
+        height: 6px;
+        background-color: #374151;
+        cursor: row-resize;
+        transition: background-color 0.15s ease;
+        z-index: 10;
+        flex-shrink: 0;
+    }
+    #results-resize-handle:hover { background-color: var(--primary-light); }
+
+    .difficulty-easy { background-color: #d1fae5; color: #065f46; }
+    .difficulty-medium { background-color: #fef3c7; color: #b45309; }
+    .difficulty-hard { background-color: #fee2e2; color: #991b1b; }
+
+    .tab-btn { transition: background-color 0.15s ease; }
+    .tab-btn.active { background-color: #374151; color: white; }
+    .tab-btn:not(.active):hover { background-color: #374151; }
+
+    /* New Test Case Styles */
+    .test-case-pass { background-color: var(--success-bg); color: var(--success-text); border-left: 4px solid var(--success-text); }
+    .test-case-fail { background-color: var(--failure-bg); color: var(--failure-text); border-left: 4px solid var(--failure-text); }
+    .test-case-dep-fail { background-color: var(--deploy-fail-bg); color: var(--deploy-fail-text); border-left: 4px solid var(--deploy-fail-text); }
+    .test-case-detail { color: var(--text-color); background-color: #2d2d2d; border-radius: 4px; padding: 6px 12px; margin-top: 5px; }
+
+    @media (max-width: 768px) {
+      .compiler-grid { grid-template-columns: 1fr; grid-template-rows: 40% 60%; }
+      .problem-content-panel { border-right: none; border-bottom: 1px solid #e5e7eb; }
+      .editor-container { grid-row: 2; }
+      #results-resize-handle { display: none; }
+      .results-panel { height: 40vh !important; }
+      .ace-editor-wrapper { height: 60vh !important; }
+    }
+  </style>
+</head>
+<body class="main-grid">
+  <!-- Navbar (Header) -->
+  <nav class="bg-gray-800 flex items-center justify-between px-6 shadow-md z-10">
+    <div class="flex items-center space-x-4">
+      <div class="text-xl font-bold text-white"><i class="fas fa-terminal mr-2 text-primary-light"></i>CodeJudge Pro</div>
+      <button id="back-to-list-btn" class="text-white hover:text-primary-light transition-colors p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm hidden">
+        <i class="fas fa-arrow-left"></i> <span class="ml-1">Back to Problems</span>
+      </button>
+    </div>
+    <div class="flex items-center space-x-4">
+      <span class="text-gray-300 text-sm" id="current-problem-title-display">No Problem Selected</span>
+      <div class="auth-section flex space-x-2" id="auth-section">
+        <button class="bg-primary-light hover:bg-primary-dark text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors text-sm" id="login-btn"><i class="fas fa-sign-in-alt mr-1"></i>Login</button>
+      </div>
+      <div class="user-info hidden" id="user-info">
+        <span class="text-white font-semibold text-sm" id="username-display"></span>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-semibold py-1 px-3 rounded-lg transition-colors text-sm" id="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Area -->
+  <div class="h-full w-full overflow-hidden" id="main-content-wrapper">
+    
+    <!-- 1. Problem List Page (Initial View) -->
+    <div class="h-full w-full" id="problem-list-page">
+      <div class="problem-list-panel h-full shadow-inner">
+        <div class="p-4 border-b bg-gray-50 sticky top-0 z-10">
+          <h2 class="text-lg font-semibold text-gray-800">Available Problems</h2>
+          <input type="text" id="problem-search" placeholder="Search by title..." class="mt-2 p-2 w-full border border-gray-300 rounded-lg focus:ring-primary-color focus:border-primary-color transition-shadow text-sm">
+          <select id="difficulty-filter" class="mt-2 p-2 w-full border border-gray-300 rounded-lg focus:ring-primary-color focus:border-primary-color transition-shadow text-sm">
+            <option value="">All Difficulties</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <ul class="problem-list divide-y divide-gray-100" id="problems-list">
+          <li class="p-4 text-center text-gray-500">Loading problems...</li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- 2. Compiler Page (Split View) -->
+    <div class="h-full w-full hidden" id="compiler-page">
+      <div class="compiler-grid">
+        
+        <!-- Left Side: Problem Statement -->
+        <div class="problem-content-panel flex flex-col h-full overflow-y-auto">
+          <div class="flex-none p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+             <h4 class="text-xl font-bold text-gray-900" id="problem-title-small">Problem Title</h4>
+             <div class="text-sm text-gray-500 mt-1" id="problem-meta-small"></div>
+          </div>
+          <div id="problem-details-content" class="flex-1 p-4 space-y-4 text-gray-700">
+            <p class="text-center text-lg mt-10 text-gray-500">Loading problem details...</p>
+          </div>
+        </div>
+
+        <!-- Right Side: Editor and Results -->
+        <div class="editor-container">
+          <!-- Toolbar -->
+          <div class="editor-toolbar bg-gray-700 text-white p-3 flex items-center space-x-3 shadow-lg z-20 flex-none">
+            <select id="language-select" class="bg-gray-600 text-white p-2 rounded-lg text-sm transition-colors hover:bg-gray-500 focus:ring-primary-light focus:border-primary-light" style="width: 120px;">
+              <option value="java">Java</option>
+              <option value="python">Python</option>
+              <option value="c">C</option>
+              <option value="cpp">C++</option>
+              <option value="javascript">JS</option>
+              <option value="csharp">C#</option>
+            </select>
+            
+            <div class="flex space-x-1">
+              <button id="font-decrease" class="p-2 bg-gray-600 rounded-lg hover:bg-gray-500 transition-colors text-sm" title="Decrease font size"><i class="fas fa-minus"></i></button>
+              <button id="font-increase" class="p-2 bg-gray-600 rounded-lg hover:bg-gray-500 transition-colors text-sm" title="Increase font size"><i class="fas fa-plus"></i></button>
+            </div>
+
+            <div class="ml-auto flex space-x-3">
+              <button id="run-btn" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-lg transition-colors shadow-md text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-play mr-1"></i> Run
+              </button>
+              <button id="submit-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors shadow-md text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-paper-plane mr-1"></i> Submit</button>
+            </div>
+          </div>
+          
+          <!-- Code Editor Area -->
+          <div class="ace-editor-wrapper">
+            <div id="editor" class="ace_editor"></div>
+          </div>
+
+          <!-- Vertical Resize Handle -->
+          <div id="results-resize-handle"></div>
+
+          <!-- Results Panel -->
+          <div class="results-panel flex flex-col border-t border-gray-600 bg-gray-800 text-gray-300 shadow-xl">
+            <div class="flex-none border-b border-gray-700">
+              <nav class="flex space-x-4 p-2">
+                <button class="tab-btn text-sm px-3 py-1 rounded-t-lg transition-colors active bg-gray-700 text-white" data-tab="test-results"><i class="fas fa-vial mr-1"></i> Test Results</button>
+                <button class="tab-btn text-sm px-3 py-1 rounded-t-lg transition-colors hover:bg-gray-700" data-tab="custom-input"><i class="fas fa-terminal mr-1"></i> Custom Input</button>
+                <button class="tab-btn text-sm px-3 py-1 rounded-t-lg transition-colors hover:bg-gray-700" data-tab="submissions"><i class="fas fa-history mr-1"></i> Submissions</button>
+              </nav>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+              <div id="test-results" class="tab-content block h-full">
+                <div id="test-results-content" class="h-full">
+                  <div class="text-center text-gray-500 p-10"><i class="fas fa-play-circle fa-2x mb-3"></i><p>Run or submit your code</p></div>
+                </div>
+              </div>
+              <div id="custom-input" class="tab-content hidden h-full flex flex-col">
+                <textarea id="stdin" class="flex-1 bg-gray-700 text-gray-100 p-3 text-sm border-0 resize-none" placeholder="Enter custom input here..."></textarea>
+                <div class="flex-none p-2 border-t border-gray-700 text-gray-400 text-xs">Input used for 'Run' button only.</div>
+              </div>
+              <div id="submissions" class="tab-content hidden h-full">
+                <div id="submissions-content" class="h-full overflow-y-auto">
+                  <div class="text-center text-gray-500 p-10"><i class="fas fa-history fa-2x mb-3"></i><p>Your submission history will appear here (Login required)</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals and Overlays -->
+  <div id="modal-container">
+    <div id="loginModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 hidden z-50 flex items-center justify-center">
+      <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
+        <h5 class="text-xl font-bold mb-4">Login to CodeJudge</h5>
+        <form id="login-form">
+          <div class="mb-3"><label for="login-username" class="block text-sm font-medium text-gray-700">Username</label><input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-color focus:ring-primary-color p-2" id="login-username" required></div>
+          <div class="mb-3"><label for="login-password" class="block text-sm font-medium text-gray-700">Password</label><input type="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-color focus:ring-primary-color p-2" id="login-password" required></div>
+          <div class="alert bg-red-100 text-red-700 p-2 rounded-md mb-3 hidden text-sm" id="login-error"></div>
+          <div class="flex justify-end space-x-2"><button type="button" class="btn-close-modal bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors text-sm" data-modal="loginModal">Cancel</button><button type="button" class="bg-primary-color text-white py-2 px-4 rounded-lg hover:bg-primary-dark transition-colors text-sm" id="login-submit">Login</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<script>
+class CodeJudgeApp {
+  constructor() {
+    this.currentProblem = null; 
+    this.problems = []; 
+    this.problemCodeCache = {}; 
+    this.currentLanguage = 'java'; 
+    this.csrfToken = ''; 
+    this.fontSize = 14; 
+    this.currentUser = null; 
+    this.authToken = null; 
+    this.marker = "// YOUR CODE START"; 
+    this.activeView = 'list';
+    this.isResizing = false;
+    this.editorContainer = null;
+    this.resultsPanel = null;
+    this.resultsHandle = null;
+    
+    this.initEditor(); 
+    this.bindEvents(); 
+    this.initializeApp();
+  }
+
+  initEditor() {
+    this.editor = ace.edit("editor"); 
+    this.editSession = this.editor.getSession(); 
+    this.editor.setTheme("ace/theme/monokai"); 
+    this.editSession.setMode("ace/mode/java");
+    this.editor.setOptions({ 
+      fontSize: this.fontSize + 'pt', 
+      showPrintMargin: false, 
+      enableBasicAutocompletion: true, 
+      enableLiveAutocompletion: true, 
+      showLineNumbers: true, 
+      tabSize: 4, 
+      wrap: true, 
+      useWorker: true 
+    });
+    this.editor.on('change', () => this.saveCurrentCode());
+  }
+
+  bindEvents() {
+    this.editorContainer = document.querySelector('.editor-container');
+    this.resultsPanel = document.querySelector('.results-panel');
+    this.resultsHandle = document.getElementById('results-resize-handle');
+    
+    document.getElementById('back-to-list-btn').addEventListener('click', () => this.showView('list'));
+    document.getElementById('language-select').addEventListener('change', (e) => this.handleLanguageSwitch(e.target.value));
+    document.getElementById('run-btn').addEventListener('click', () => this.runCode());
+    document.getElementById('submit-btn').addEventListener('click', () => this.submitCode());
+    document.getElementById('font-increase').addEventListener('click', () => this.adjustFontSize(1));
+    document.getElementById('font-decrease').addEventListener('click', () => this.adjustFontSize(-1));
+    document.getElementById('problem-search').addEventListener('input', () => this.fetchProblems());
+    document.getElementById('difficulty-filter').addEventListener('change', () => this.fetchProblems());
+    document.getElementById('login-btn').addEventListener('click', () => this.showModal('loginModal'));
+    document.getElementById('logout-btn').addEventListener('click', () => this.logout());
+    document.getElementById('login-submit').addEventListener('click', () => this.handleLogin());
+    
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', (e) => this.switchResultTab(e.target.dataset.tab));
+    });
+    document.querySelectorAll('.btn-close-modal').forEach(button => {
+        button.addEventListener('click', (e) => this.hideModal(e.target.dataset.modal));
+    });
+
+    if (this.resultsHandle) {
+        this.resultsHandle.addEventListener('mousedown', (e) => this.startResizing(e));
+    }
+    document.addEventListener('mousemove', (e) => this.handleResize(e));
+    document.addEventListener('mouseup', () => this.stopResizing());
+  }
+
+  async initializeApp() { 
+    this.showView('list');
+    await this.fetchCsrfToken(); 
+    this.checkAuthStatus(); 
+    await this.fetchProblems(); 
+  }
+
+  startResizing(e) {
+    if (e.button !== 0) return;
+    this.isResizing = true;
+    this.startY = e.clientY;
+    this.startHeight = this.resultsPanel.offsetHeight;
+    this.editorContainerHeight = this.editorContainer.offsetHeight;
+    document.body.style.cursor = 'row-resize';
+  }
+
+  handleResize(e) {
+    if (!this.isResizing) return;
+    
+    const deltaY = this.startY - e.clientY;
+    let newHeight = this.startHeight + deltaY;
+    
+    const minHeight = 40;
+    const maxHeight = this.editorContainer.offsetHeight - 100;
+    
+    if (newHeight < minHeight) {
+        newHeight = minHeight;
+    } else if (newHeight > maxHeight) {
+        newHeight = maxHeight;
+    }
+
+    this.resultsPanel.style.height = `${newHeight}px`;
+    this.editor.resize();
+  }
+
+  stopResizing() {
+    this.isResizing = false;
+    document.body.style.cursor = '';
+  }
+
+  showView(viewName) {
+    this.activeView = viewName;
+    const listPage = document.getElementById('problem-list-page');
+    const compilerPage = document.getElementById('compiler-page');
+    const backBtn = document.getElementById('back-to-list-btn');
+    const displayElement = document.getElementById('current-problem-title-display');
+
+    if (viewName === 'list') {
+        listPage.classList.remove('hidden');
+        compilerPage.classList.add('hidden');
+        backBtn.classList.add('hidden');
+        displayElement.textContent = 'No Problem Selected';
+    } else {
+        listPage.classList.add('hidden');
+        compilerPage.classList.remove('hidden');
+        backBtn.classList.remove('hidden');
+        requestAnimationFrame(() => this.editor.resize()); 
+    }
+  }
+
+  showModal(modalId) {
+    document.getElementById(modalId).classList.remove('hidden');
+  }
+
+  hideModal(modalId) {
+    document.getElementById(modalId).classList.add('hidden');
+    const errorEl = document.getElementById('login-error');
+    if (errorEl) errorEl.classList.add('hidden');
+  }
+
+  switchResultTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById(tabId).classList.remove('hidden');
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active', 'bg-gray-700', 'text-white'));
+    
+    const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+    activeBtn.classList.add('active', 'bg-gray-700', 'text-white');
+    
+    document.querySelectorAll('.tab-btn:not(.active)').forEach(btn => btn.classList.add('hover:bg-gray-700'));
+    
+    if (tabId === 'submissions' && this.currentUser) {
+        this.loadSubmissions();
+    }
+  }
+
+  adjustFontSize(delta) { 
+    this.fontSize = Math.max(10, Math.min(24, this.fontSize + delta)); 
+    this.editor.setOptions({ fontSize: this.fontSize + 'pt' }); 
+  }
+
+  async fetchCsrfToken() { 
+    try { 
+      const response = await fetch('/api/csrf-token'); 
+      const data = await response.json(); 
+      this.csrfToken = data.csrf_token; 
+    } catch (error) { 
+      console.error('Failed to fetch CSRF token:', error); 
+    } 
+  }
+  
+  checkAuthStatus() { 
+    const token = localStorage.getItem('authToken'); 
+    const user = localStorage.getItem('currentUser'); 
+    if (token && user) { 
+      try { 
+        this.authToken = token; 
+        this.currentUser = JSON.parse(user); 
+        this.updateAuthUI(); 
+      } catch (e) { 
+        this.clearAuth(); 
+      } 
+    } 
+  }
+
+  updateAuthUI() {
+    if (this.currentUser) { 
+      document.getElementById('auth-section').classList.add('hidden'); 
+      document.getElementById('user-info').classList.remove('hidden'); 
+      document.getElementById('username-display').textContent = this.currentUser.username; 
+      document.getElementById('submit-btn').disabled = false; 
+    } else { 
+      document.getElementById('auth-section').classList.remove('hidden'); 
+      document.getElementById('user-info').classList.add('hidden'); 
+      document.getElementById('submit-btn').disabled = true; 
+    }
+  }
+
+  async handleLogin() {
+    const username = document.getElementById('login-username').value; 
+    const password = document.getElementById('login-password').value;
+    if (!username || !password) { this.showAuthError('login-error', 'Please fill in all fields'); return; }
+    try {
+      const response = await fetch('/api/auth/login', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': this.csrfToken }, 
+        body: JSON.stringify({ username, password }) 
+      });
+      const data = await response.json();
+      if (response.ok) { 
+        this.authToken = data.token; 
+        this.currentUser = data.user; 
+        localStorage.setItem('authToken', this.authToken); 
+        localStorage.setItem('currentUser', JSON.stringify(this.currentUser)); 
+        this.updateAuthUI(); 
+        this.hideModal('loginModal'); 
+        this.showToast('Login successful!', 'success'); 
+      } else { 
+        this.showAuthError('login-error', data.error || 'Login failed'); 
+      }
+    } catch (error) { 
+      this.showAuthError('login-error', 'Network error. Please try again.'); 
+    }
+  }
+
+  logout() { 
+    this.clearAuth(); 
+    this.showToast('Logged out successfully!', 'success'); 
+  }
+
+  clearAuth() { 
+    this.currentUser = null; 
+    this.authToken = null; 
+    localStorage.removeItem('authToken'); 
+    localStorage.removeItem('currentUser'); 
+    this.updateAuthUI(); 
+  }
+
+  showAuthError(elementId, message) { 
+    const element = document.getElementById(elementId); 
+    element.textContent = message; 
+    element.classList.remove('hidden'); 
+  }
+
+  showToast(message, type = 'info') { 
+    const color = type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+    const alert = document.createElement('div'); 
+    alert.className = `fixed bottom-4 right-4 ${color} text-white px-6 py-3 rounded-lg shadow-xl transition-opacity duration-300`; 
+    alert.style.zIndex = '9999'; 
+    alert.textContent = message; 
+    document.body.appendChild(alert); 
+    setTimeout(() => { alert.remove(); }, 4000); 
+  }
+
+  async fetchProblems() {
+    const list = document.getElementById('problems-list');
+    list.innerHTML = `<li class="p-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i>Loading problems...</li>`;
+
+    const search = document.getElementById('problem-search').value; 
+    const difficulty = document.getElementById('difficulty-filter').value;
+    
+    try {
+      const params = new URLSearchParams(); 
+      params.append('page', '1'); 
+      params.append('page_size', '50'); 
+      if (search) params.append('search', search); 
+      if (difficulty) params.append('difficulty', difficulty);
+      
+      const response = await fetch(`/api/problems?${params}`); 
+      const data = await response.json();
+      
+      this.problems = data.problems || []; 
+      this.renderProblemsList(); 
+    } catch (error) { 
+      this.showToast('Failed to load problems.', 'error'); 
+      list.innerHTML = `<li class="p-4 text-center text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Error loading problems.</li>`;
+    }
+  }
+
+  renderProblemsList() {
+    const list = document.getElementById('problems-list'); 
+    if (!list) return; 
+    list.innerHTML = '';
+    
+    if (this.problems.length === 0) {
+        list.innerHTML = `<li class="p-4 text-center text-gray-500">No problems found matching filters.</li>`;
+        return;
+    }
+
+    this.problems.forEach((problem) => {
+      const li = document.createElement('li'); 
+      li.className = `p-4 hover:bg-gray-50 transition-colors flex justify-between items-center problem-item`;
+      li.setAttribute('data-slug', problem.slug);
+      
+      const difficultyClass = problem.difficulty === 'easy' ? 'difficulty-easy' : 
+                              problem.difficulty === 'medium' ? 'difficulty-medium' : 'difficulty-hard';
+                              
+      li.innerHTML = `
+        <div class="flex flex-col flex-1 cursor-pointer" data-action="load-problem">
+          <span class="font-medium text-gray-800">${problem.title}</span>
+          <span class="text-xs font-semibold px-3 py-1 rounded-full w-fit mt-1 ${difficultyClass}">
+            ${(problem.difficulty || 'easy').charAt(0).toUpperCase() + (problem.difficulty || 'easy').slice(1)}
+          </span>
+        </div>
+        <button class="bg-primary-light hover:bg-primary-dark text-white text-sm font-semibold py-1 px-3 rounded-lg shadow-sm transition-colors ml-4" data-action="run-problem"><i class="fas fa-play mr-1"></i> Run</button>
+      `;
+      li.querySelector('[data-action="load-problem"]').addEventListener('click', () => { this.loadProblemBySlug(problem.slug); }); 
+      li.querySelector('[data-action="run-problem"]').addEventListener('click', () => { this.loadProblemBySlug(problem.slug); }); 
+      list.appendChild(li);
+    });
+  }
+
+  async loadProblemBySlug(slug) {
+    this.saveCurrentCode();
+    
+    document.querySelectorAll('.problem-item').forEach(item => {
+        item.classList.remove('bg-primary-color/10');
+        item.classList.add('hover:bg-gray-50');
+    });
+    const problemItem = document.querySelector(`.problem-item[data-slug="${slug}"]`);
+    if (problemItem) {
+        problemItem.classList.add('bg-primary-color/10');
+        problemItem.classList.remove('hover:bg-gray-50');
+    }
+    
+    try {
+      const response = await fetch(`/api/problem/${slug}`); 
+      const data = await response.json();
+      
+      if (data.error) { 
+        this.showToast('Failed to load problem details.', 'error'); 
+        return; 
+      }
+      
+      this.currentProblem = data.problem; 
+      this.renderProblemContent(); 
+      this.loadCodeForProblem();
+      document.getElementById('current-problem-title-display').textContent = this.currentProblem.title;
+      this.showView('compiler');
+      this.editor.focus();
+    } catch (error) { 
+      this.showToast('Network error loading problem.', 'error'); 
+    }
+  }
+
+  renderProblemContent() {
+    const problem = this.currentProblem; 
+    const wrapper = document.getElementById('problem-details-content'); 
+    if (!wrapper || !problem) return;
+    
+    document.getElementById('problem-title-small').textContent = problem.title;
+    const difficultyClass = problem.difficulty === 'easy' ? 'text-green-600' : 
+                            problem.difficulty === 'medium' ? 'text-yellow-600' : 'text-red-600';
+    document.getElementById('problem-meta-small').innerHTML = `
+        <span class="font-semibold ${difficultyClass}">${(problem.difficulty || 'easy').charAt(0).toUpperCase() + (problem.difficulty || 'easy').slice(1)}</span>
+        <span class="ml-2">Time: ${problem.time_limit || 1}s | Memory: ${problem.memory_limit || '256m'}</span>
+    `;
+
+    let examplesHtml = ''; 
+    let constraintsHtml = '';
+    
+    if (problem.examples && problem.examples.length > 0) { 
+      examplesHtml = `<div class="p-4 rounded-xl border border-gray-200 bg-gray-50">
+                        <h6 class="text-lg font-semibold mb-3 text-primary-dark"><i class="fas fa-list-ol mr-2"></i>Examples</h6>
+                        ${problem.examples.map((example, i) => `<div class="mb-3 bg-white p-3 rounded-lg border border-gray-100"><strong>Example ${i + 1}:</strong><pre class="text-sm overflow-x-auto">${this.escapeHtml(example)}</pre></div>`).join('')}
+                      </div>`; 
+    }
+    
+    if (problem.constraints && problem.constraints.length > 0) { 
+      constraintsHtml = `<div class="p-4 rounded-xl border border-gray-200 bg-gray-50">
+                          <h6 class="text-lg font-semibold mb-3 text-primary-dark"><i class="fas fa-exclamation-triangle mr-2"></i>Constraints</h6>
+                          <ul class="list-disc pl-5 space-y-1 text-sm">${problem.constraints.map(constraint => `<li>${this.escapeHtml(constraint)}</li>`).join('')}</ul>
+                        </div>`; 
+    }
+
+    wrapper.innerHTML = `
+      <div class="problem-description text-base leading-relaxed">${problem.statement || '<p>No description available.</p>'}</div>
+      ${examplesHtml}
+      ${constraintsHtml}
+    `;
+  }
+  
+  saveCurrentCode() { 
+    if (this.currentProblem) { 
+      const cacheKey = `${this.currentProblem.slug}_${this.currentLanguage}`; 
+      const code = this.editor.getValue();
+      const filename = this.getFilenameForLanguage(this.currentLanguage);
+      this.problemCodeCache[cacheKey] = { [filename]: code }; 
+    } 
+  }
+
+  getFilenameForLanguage(language) {
+    const filenameMap = { 
+      'java': 'Main.java', 
+      'python': 'app.py', 
+      'c': 'main.c', 
+      'cpp': 'main.cpp', 
+      'javascript': 'index.js', 
+      'csharp': 'Submission.cs' 
+    };
+    return filenameMap[language] || 'main.txt';
+  }
+
+  handleLanguageSwitch(newLanguage) {
+    if (newLanguage === this.currentLanguage) return;
+    
+    const currentCode = this.editor.getValue().trim();
+    if (currentCode && this.currentProblem) {
+      if (!confirm(`Are you sure you want to switch to ${newLanguage}? Your current code will be saved locally in your browser cache.`)) { 
+        document.getElementById('language-select').value = this.currentLanguage; 
+        return;
+      }
+    }
+    
+    this.saveCurrentCode(); 
+    this.currentLanguage = newLanguage; 
+    this.setEditorMode(newLanguage); 
+    this.loadCodeForProblem();
+  }
+
+  setEditorMode(language) { 
+    const modes = { 
+      'java': 'ace/mode/java', 
+      'python': 'ace/mode/python', 
+      'c': 'ace/mode/c_cpp', 
+      'cpp': 'ace/mode/c_cpp', 
+      'javascript': 'ace/mode/javascript', 
+      'csharp': 'ace/mode/csharp' 
+    }; 
+    this.editSession.setMode(modes[language] || 'ace/mode/text'); 
+    document.getElementById('language-select').value = language;
+  }
+
+  loadCodeForProblem() {
+    if (!this.currentProblem) { 
+        this.setEditorMode(this.currentLanguage);
+        this.editor.setValue("// Select a problem from the left to start coding...", -1); 
+        this.editor.setReadOnly(true);
+        return; 
+    }
+
+    this.editor.setReadOnly(false);
+    const lang = this.currentLanguage; 
+    const cacheKey = `${this.currentProblem.slug}_${lang}`;
+    let codeToLoad = ''; 
+    
+    if (this.problemCodeCache[cacheKey]) { 
+        const filename = this.getFilenameForLanguage(lang);
+        codeToLoad = this.problemCodeCache[cacheKey][filename] || '';
+    } else {
+        const templateKey = `template_${lang}`;
+        codeToLoad = this.currentProblem[templateKey] || this.getDefaultTemplate(lang);
+    }
+    
+    this.editor.setValue(codeToLoad, -1);
+    this.editor.resize();
+  }
+  
+  getDefaultTemplate(lang) {
+      const templates = { 
+          'java': 'import java.util.*;\n\nclass Solution {\n    public boolean isPalindrome(int x) {\n        // YOUR CODE START\n        \n        // YOUR CODE END\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        // Read input here\n        scanner.close();\n    }\n}', 
+          'python': 'def is_palindrome(x):\n    # YOUR CODE START\n    \n    # YOUR CODE END\n\nif __name__ == "__main__":\n    # Add your input reading logic here\n    pass', 
+          'c': '#include <stdio.h>\n\nint isPalindrome(int x) {\n    // YOUR CODE START\n    \n    // YOUR CODE END\n}\n\nint main() {\n    // Add your input reading logic here\n    return 0;\n}',
+          'cpp': '#include <iostream>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindrome(int x) {\n        // YOUR CODE START\n        \n        // YOUR CODE END\n    }\n};\n\nint main() {\n    // Add your input reading logic here\n    return 0;\n}',
+          'javascript': 'function isPalindrome(x) {\n    // YOUR CODE START\n    \n    // YOUR CODE END\n}\n\n// Add your input reading logic here',
+          'csharp': 'using System;\n\npublic class Solution {\n    public bool IsPalindrome(int x) {\n        // YOUR CODE START\n        \n        // YOUR CODE END\n    }\n}\n\nclass Program {\n    static void Main() {\n        // Add your input reading logic here\n    }\n}'
+      };
+      return templates[lang] || '// Code template not available.';
+  }
+
+  async runCode() {
+    if (!this.currentProblem) { this.showToast('Please select a problem first.', 'warning'); return; }
+    
+    this.saveCurrentCode();
+    
+    const stdin = document.getElementById('stdin').value;
+    const filename = this.getFilenameForLanguage(this.currentLanguage);
+    const files = this.problemCodeCache[`${this.currentProblem.slug}_${this.currentLanguage}`] || { [filename]: this.editor.getValue() };
+    
+    const payload = { 
+        language: this.currentLanguage, 
+        files: files, 
+        problem_slug: this.currentProblem.slug, 
+        stdin: stdin 
+    };
+    
+    await this.executeCode('run', payload, 'Running...');
+  }
+
+  async submitCode() {
+    if (!this.currentProblem) { this.showToast('Please select a problem first.', 'warning'); return; }
+    if (!this.currentUser) { this.showToast('Please login to submit your solution.', 'warning'); this.showModal('loginModal'); return; }
+    
+    this.saveCurrentCode();
+    
+    const filename = this.getFilenameForLanguage(this.currentLanguage);
+    const files = this.problemCodeCache[`${this.currentProblem.slug}_${this.currentLanguage}`] || { [filename]: this.editor.getValue() };
+
+    const payload = { 
+        language: this.currentLanguage, 
+        files: files, 
+        problem_slug: this.currentProblem.slug 
+    };
+    
+    await this.executeCode('submit', payload, 'Submitting...');
+  }
+  
+  async executeCode(endpoint, payload, loadingMessage) {
+    this.showLoading(loadingMessage);
+    this.switchResultTab('test-results');
+
+    try {
+      const headers = { 'Content-Type': 'application/json', 'X-CSRF-Token': this.csrfToken };
+      if (this.authToken) { headers['Authorization'] = `Bearer ${this.authToken}`; }
+      
+      const response = await fetch(`/api/${endpoint}`, { 
+        method: 'POST', 
+        headers: headers, 
+        body: JSON.stringify(payload) 
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        if (response.status === 401) { this.showToast(result.error + ". Please log in again.", 'error'); this.logout(); } 
+        else { this.showError(result.error || `Request failed: ${response.status}`); }
+        return;
+      }
+      
+      this.displayResults(result, endpoint);
+      this.showToast(this.getVerdictText(result.verdict || 'WA'), result.verdict === 'AC' ? 'success' : (result.verdict === 'DEP' ? 'warning' : 'error'));
+    } catch (error) { 
+      this.showError('Execution failed: ' + error.message); 
+      this.showToast('Compiler connection failed.', 'error');
+    }
+  }
+
+  displayResults(result, endpoint) { 
+    if (endpoint === 'submit') { 
+      this.showSubmissionResults(result); 
+    } else { 
+      this.showRunResults(result); 
+    }
+  }
+
+  showRunResults(result) {
+    const content = document.getElementById('test-results-content');
+    
+    if (result.compiled === false) { 
+      content.innerHTML = `<div class="p-4 bg-red-900 text-red-300 rounded-lg m-4">
+                            <h6 class="font-bold text-lg"><i class="fas fa-times-circle mr-2"></i>Compilation Error (CE)</h6>
+                            <pre class="mt-2 text-sm overflow-x-auto bg-gray-900 p-2 rounded">${this.escapeHtml(result.compile_error || 'Unknown compilation error')}</pre>
+                          </div>`; 
+      return; 
+    }
+    
+    if (result.tests && result.tests.length > 0) {
+      let html = `<div class="p-4 bg-gray-700 text-white flex justify-between items-center sticky top-0">
+                    <h6 class="text-lg font-semibold">Test Results</h6>
+                    <span class="px-3 py-1 rounded-full text-sm font-bold ${result.verdict === 'AC' ? 'bg-green-600' : 'bg-red-600'}">
+                      ${result.verdict} (${result.passed}/${result.total})
+                    </span>
+                  </div>`;
+      
+      result.tests.forEach((test, index) => {
+        const isPass = test.status === 'PASS';
+        const statusClass = isPass ? 'test-case-pass' : 'test-case-fail';
+        const statusIcon = isPass ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>';
+        const statusText = isPass ? 'Accepted' : (test.error || 'Wrong Answer');
+        
+        html += `<div class="p-4 border-b border-gray-700 transition-colors ${statusClass}">
+                  <div class="flex justify-between items-center text-base">
+                    <div class="font-bold">Test Case ${index + 1}</div>
+                    <div class="font-semibold flex items-center space-x-2">
+                       ${statusIcon} <span>${statusText}</span>
+                    </div>
+                  </div>
+                  <div class="mt-4 text-sm space-y-3">
+                      <div>
+                          <p class="text-gray-400 mb-1">Input:</p>
+                          <pre class="test-case-detail">${this.escapeHtml(test.input)}</pre>
+                      </div>
+                      <div>
+                          <p class="text-gray-400 mb-1">Expected Output:</p>
+                          <pre class="test-case-detail">${this.escapeHtml(test.expected)}</pre>
+                      </div>
+                      <div>
+                          <p class="text-gray-400 mb-1">Your Output:</p>
+                          <pre class="test-case-detail">${this.escapeHtml(test.output)}</pre>
+                      </div>
+                      ${test.error && !isPass ? `
+                          <div>
+                              <p class="text-red-400 mb-1 font-semibold">Error Message:</p>
+                              <pre class="test-case-detail">${this.escapeHtml(test.error)}</pre>
+                          </div>
+                      ` : ''}
+                  </div>
+                </div>`;
+      });
+      content.innerHTML = html;
+    } else {
+      content.innerHTML = `<div class="p-4">
+                            <h6 class="text-lg font-semibold border-b border-gray-700 pb-2 mb-3">Custom Run Output</h6>
+                            <pre class="bg-gray-700 text-gray-100 p-3 rounded-lg overflow-x-auto text-sm">${this.escapeHtml(result.output || 'No output')}</pre>
+                            ${result.error ? `<div class="p-3 bg-red-600 text-white rounded-lg mt-3 text-sm">Runtime Error: ${this.escapeHtml(result.error)}</div>` : ''}
+                            ${result.execution_time ? `<div class="text-gray-400 text-xs mt-3">Execution time: ${result.execution_time}s</div>` : ''}
+                          </div>`;
+    }
+  }
+
+  showSubmissionResults(result) {
+    const content = document.getElementById('test-results-content');
+    const verdict = result.verdict || 'WA'; 
+    const passed = result.passed || 0; 
+    const total = result.total || 0; 
+    const percentage = total > 0 ? Math.round((passed / total) * 100) : 0; 
+    
+    let isAC = verdict === 'AC';
+    let verdictColor = isAC ? 'text-green-500' : (verdict === 'DEP' ? 'text-yellow-500' : 'text-red-500');
+    let icon = isAC ? 'fa-check-circle' : (verdict === 'DEP' ? 'fa-exclamation-triangle' : 'fa-times-circle');
+    
+    if (result.compiled === false) { 
+      content.innerHTML = `<div class="p-4 bg-red-900 text-red-300 rounded-lg m-4">
+                            <h6 class="font-bold text-lg"><i class="fas fa-times-circle mr-2"></i>Compilation Failed (CE)</h6>
+                            <pre class="mt-2 text-sm overflow-x-auto bg-gray-900 p-2 rounded">${this.escapeHtml(result.compile_error)}</pre>
+                          </div>`; 
+      return; 
+    } 
+    
+    let testBadges = '';
+    if (result.tests && result.tests.length > 0) {
+      testBadges = `<div class="mt-4 p-3 bg-gray-700 rounded-lg flex flex-wrap gap-2">
+                      ${result.tests.map((test, index) => {
+                        const testVerdict = test.status === 'PASS' ? 'AC' : (test.error ? 'RE' : 'WA');
+                        const badgeClass = test.status === 'PASS' ? 'bg-green-600' : (test.error ? 'bg-orange-600' : 'bg-red-600');
+                        return `<span class="text-xs px-2 py-1 rounded ${badgeClass} text-white" 
+                               title="Test ${index + 1}: ${this.getVerdictText(testVerdict)}">T${index + 1}</span>`;
+                      }).join('')}
+                    </div>`;
+    }
+
+    content.innerHTML = `
+      <div class="text-center p-6 bg-gray-900 h-full">
+        <div class="text-7xl ${verdictColor} mb-4">
+          <i class="fas ${icon}"></i>
+        </div>
+        <h4 class="text-3xl font-extrabold ${verdictColor} mb-2">${this.getVerdictText(verdict)} (${verdict})</h4>
+        <p class="text-lg text-gray-300">${passed}/${total} test cases passed (${percentage}%)</p>
+        ${result.execution_time ? `<p class="text-gray-400 text-sm mt-2">Time: ${result.execution_time}s</p>` : ''}
+        ${testBadges}
+        ${result.error ? `<div class="p-3 ${verdict === 'DEP' ? 'bg-yellow-600 text-gray-900' : 'bg-red-600 text-white'} rounded-lg mt-4 text-sm font-semibold">
+                            Deployment/Runtime Error: ${this.escapeHtml(result.error)}
+                          </div>` : ''}
+      </div>`; 
+      
+    this.loadSubmissions();
+  }
+
+  getVerdictText(verdict) { 
+    const map = { 
+      'AC': 'Accepted', 
+      'WA': 'Wrong Answer', 
+      'TLE': 'Time Limit Exceeded', 
+      'MLE': 'Memory Limit Exceeded', 
+      'RE': 'Runtime Error', 
+      'CE': 'Compilation Error', 
+      'IE': 'Internal Error',
+      'DEP': 'Deployment Check Failed', 
+      'PASS': 'Accepted',
+      'FAIL': 'Wrong Answer',
+    }; 
+    return map[verdict] || 'Unknown Verdict'; 
+  }
+
+  async loadSubmissions() {
+    if (!this.currentUser) return;
+    const content = document.getElementById('submissions-content'); 
+    content.innerHTML = `<div class="flex justify-center items-center h-full"><div class="text-center"><i class="fas fa-spinner fa-spin text-primary-light fa-2x"></i><p class="text-gray-400 mt-2">Loading submissions...</p></div></div>`;
+    
+    try {
+      const response = await fetch('/api/submissions', { headers: { 'Authorization': `Bearer ${this.authToken}` } }); 
+      const data = await response.json();
+      
+      if (!response.ok) { throw new Error(data.error || 'Failed to fetch'); }
+      
+      if (data.submissions.length === 0) { 
+        content.innerHTML = `<div class="text-center text-gray-500 p-10"><i class="fas fa-inbox fa-2x mb-3"></i><p>No submissions yet</p></div>`; 
+        return; 
+      }
+      
+      let html = '<div class="divide-y divide-gray-700">';
+      data.submissions.forEach(submission => {
+        const isAC = submission.verdict === 'AC';
+        const isDEP = submission.verdict === 'DEP';
+        const verdictClass = isAC ? 'bg-green-600' : (isDEP ? 'bg-yellow-600' : 'bg-red-600');
+        
+        html += `<div class="p-3 hover:bg-gray-700 transition-colors cursor-pointer">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <strong class="text-gray-100">${submission.title}</strong>
+                      <div class="text-xs text-gray-400">${submission.language.toUpperCase()} &bull; ${new Date(submission.created_at).toLocaleString()}</div>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-xs font-bold px-2 py-1 rounded ${verdictClass} text-white">${submission.verdict}</span>
+                      <div class="text-xs text-gray-400">${submission.passed}/${submission.total}</div>
+                    </div>
+                  </div>
+                </div>`;
+      });
+      html += '</div>'; 
+      content.innerHTML = html;
+    } catch (error) { 
+      content.innerHTML = `<div class="p-4 text-center text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Failed to load submissions: ${error.message}</div>`; 
+    }
+  }
+
+  showLoading(message) { 
+    document.getElementById('test-results-content').innerHTML = `<div class="flex justify-center items-center h-full"><div class="text-center"><i class="fas fa-spinner fa-spin text-primary-light fa-3x mb-3"></i><p class="text-gray-400">${message}</p></div></div>`; 
+  }
+
+  showError(message) { 
+    document.getElementById('test-results-content').innerHTML = `<div class="p-4 bg-red-600 text-white rounded-lg m-4"><i class="fas fa-exclamation-triangle mr-2"></i>${this.escapeHtml(message)}</div>`; 
+    this.switchResultTab('test-results'); 
+  }
+  
+  escapeHtml(text) { 
+    if (text === null || text === undefined) return ''; 
+    const div = document.createElement('div'); 
+    div.textContent = text; 
+    return div.innerHTML; 
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => { window.codeJudgeApp = new CodeJudgeApp(); });
+</script>
+</body>
+</html>

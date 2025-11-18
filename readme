@@ -1,0 +1,168 @@
+# Create a virtual environment
+python3 -m venv venv
+
+# Activate the virtual environment
+# On Linux/macOS:
+source venv/bin/activate
+
+# On Windows (Command Prompt):
+# venv\Scripts\activate.bat
+
+# Install dependencies
+pip install -r requirements.txt
+
+
+docker pull eclipse-temurin:17-jdk-jammy  # For Java
+docker pull python:3.11-slim             # For Python
+docker pull gcc:11                       # For C/C++
+docker pull node:18-slim                 # For JavaScript
+docker pull mcr.microsoft.com/dotnet/sdk:7.0  # For C#
+
+
+-- Create the database
+CREATE DATABASE IF NOT EXISTS codejudge; [cite: 2]
+
+-- Select the database
+USE codejudge;
+
+
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(100) UNIQUE NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_login TIMESTAMP NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  INDEX idx_username (username),
+  INDEX idx_email (email)
+);
+
+CREATE TABLE IF NOT EXISTS problems (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  slug VARCHAR(100) UNIQUE NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  statement TEXT,
+  description TEXT,
+  difficulty ENUM('easy', 'medium', 'hard') DEFAULT 'easy',
+  image_url VARCHAR(255),
+  template_java TEXT,
+  template_python TEXT,
+  template_c TEXT,
+  template_cpp TEXT,
+  template_javascript TEXT,
+  template_csharp TEXT,
+  examples JSON,
+  constraints JSON,
+  time_limit INT DEFAULT 3,
+  memory_limit VARCHAR(20) DEFAULT '256m',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  is_public BOOLEAN DEFAULT TRUE,
+  INDEX idx_slug (slug),
+  INDEX idx_difficulty (difficulty),
+  INDEX idx_created (created_at)
+);
+
+CREATE TABLE IF NOT EXISTS testcases (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  problem_id INT NOT NULL,
+  input_text TEXT,
+  expected_output TEXT,
+  is_hidden BOOLEAN DEFAULT FALSE,
+  execution_order INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (problem_id) REFERENCES problems(id) ON DELETE CASCADE,
+  INDEX idx_problem_id (problem_id),
+  INDEX idx_hidden (is_hidden)
+);
+
+CREATE TABLE IF NOT EXISTS submissions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  problem_id INT NOT NULL,
+  code TEXT NOT NULL,
+  language VARCHAR(20) NOT NULL,
+  verdict ENUM('AC', 'WA', 'TLE', 'MLE', 'CE', 'RE', 'IE', 'DEP') DEFAULT 'WA',
+  passed INT DEFAULT 0,
+  total INT DEFAULT 0,
+  execution_time FLOAT DEFAULT 0,
+  memory_used INT DEFAULT 0,
+  error_message TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (problem_id) REFERENCES problems(id),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  INDEX idx_user_id (user_id),
+  INDEX idx_problem_id (problem_id),
+  INDEX idx_verdict (verdict),
+  INDEX idx_created (created_at),
+  INDEX idx_user_problem (user_id, problem_id)
+);
+
+CREATE TABLE IF NOT EXISTS submission_testcases (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    submission_id INT NOT NULL,
+    testcase_id INT NOT NULL,
+    status ENUM('PASS', 'FAIL', 'TLE', 'MLE', 'RE') DEFAULT 'FAIL',
+    execution_time FLOAT DEFAULT 0,
+    memory_used INT DEFAULT 0,
+    output TEXT,
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (submission_id) REFERENCES submissions(id) ON DELETE CASCADE,
+    FOREIGN KEY (testcase_id) REFERENCES testcases(id) ON DELETE CASCADE,
+    INDEX idx_submission_id (submission_id),
+    INDEX idx_testcase_id (testcase_id)
+);
+
+-- Tables for flask-limiter (optional but good practice to include)
+CREATE TABLE IF NOT EXISTS flask_limiter (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    key_ VARCHAR(255) NOT NULL,
+    counter INT DEFAULT 0,
+    expires INT NOT NULL,
+    INDEX idx_key (key_)
+);
+
+CREATE TABLE IF NOT EXISTS flask_limiter_window (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    key_ VARCHAR(255) NOT NULL,
+    value INT NOT NULL,
+    INDEX idx_key_value (key_, value)
+);
+
+-- Add sample problem data
+INSERT INTO problems (slug, title, statement, description, difficulty, template_java, template_python, template_c, template_cpp, template_javascript, template_csharp, examples, constraints)
+VALUES (
+    'palindrome-number',
+    'Palindrome Number',
+    '<strong>Given an integer x, return true if x is a palindrome, and false otherwise.</strong>',
+    'An integer is a palindrome when it reads the same forward and backward. For example, 121 is a palindrome while 123 is not.', [cite: 15]
+    'easy',
+    'import java.util.*;\n\nclass Solution {\n    public boolean isPalindrome(int x) {\n        // YOUR CODE START\n        \n        // YOUR CODE END\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int x = scanner.nextInt();\n        \n        Solution solution = new Solution();\n        boolean result = solution.isPalindrome(x);\n        System.out.println(result ? "true" : "false");\n        scanner.close();\n    }\n}', [cite: 63, 64, 65]
+    'def is_palindrome(x):\n    # Your code here\n    pass\n\nif __name__ == "__main__":\n    x = int(input())\n    result = is_palindrome(x)\n    print("true" if result else "false")', [cite: 17]
+    '#include <stdio.h>\n#include <stdbool.h>\n\nbool isPalindrome(int x) {\n    // Your code here\n}\n\nint main() {\n    int x;\n    scanf("%d", &x);\n    \n    bool result = isPalindrome(x);\n    printf(result ? "true" : "false");\n    return 0;\n}', [cite: 18]
+    '#include <iostream>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindrome(int x) {\n        // Your code here\n    }\n};\n\nint main() {\n    int x;\n    cin >> x;\n    \n    Solution solution;\n    bool result = solution.isPalindrome(x);\n    cout << (result ? "true" : "false") << endl;\n    return 0;\n}',
+    'function isPalindrome(x) \n{\n    // Your code here\n}\n\nconst readline = require(''readline'');\nconst rl = readline.createInterface({\n    input: process.stdin,\n    output: process.stdout\n});\n\nrl.on(''line'', (line) => {\n    const x = parseInt(line);\n    const result = isPalindrome(x);\n    console.log(result ? "true" : "false");\n    rl.close();\n});', [cite: 19, 20]
+    'using System;\n\npublic class Solution {\n    public bool IsPalindrome(int x) {\n        // Your code here\n    }\n}\n\nclass Program {\n    static void Main() {\n        int x = int.Parse(Console.ReadLine());\n        \n        Solution solution = new Solution();\n        bool result = solution.IsPalindrome(x);\n        Console.WriteLine(result ? "true" : "false");\n    }\n}', [cite: 21]
+    '[\n  "Input: x = 121\\nOutput: true",\n  "Input: x = -121\\nOutput: false",\n  "Input: x = 10\\nOutput: false"\n]',
+    '[\n  "-2^31 <= x <= x^31 - 1",\n  "Follow up: Could you solve it without converting the integer to a string?",\n  "Time limit: 1 second"\n]'
+); [cite: 22]
+
+-- Add sample testcases
+INSERT INTO testcases (problem_id, input_text, expected_output, is_hidden, execution_order) VALUES
+    (LAST_INSERT_ID(), '121', 'true', 0, 1),
+    (LAST_INSERT_ID(), '-121', 'false', 0, 2),
+    (LAST_INSERT_ID(), '10', 'false', 0, 3),
+    (LAST_INSERT_ID(), '0', 'true', 1, 4),
+    (LAST_INSERT_ID(), '123454321', 'true', 1, 5),
+    (LAST_INSERT_ID(), '123456', 'false', 1, 6); [cite: 23]
+
+
+# 1. Make sure your Python virtual environment is active.
+# 2. Make sure your Docker daemon is running.
+# 3. Make sure your MySQL server is running.
+
+# Run the Flask application
+python app.py
