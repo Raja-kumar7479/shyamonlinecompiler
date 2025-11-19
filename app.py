@@ -24,11 +24,13 @@ from db import (
     get_user_by_id, create_user, update_user_last_login,
     store_submission_testcase
 )
-from executor import run_in_docker, ExecutionResult, simulate_deployment_validation
+# Updated import to use local execution
+from executor import execute_code_locally, ExecutionResult, simulate_deployment_validation
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = SECRET_KEY
 
+# Disable CSRF for API usage if needed, or ensure frontend handles it correctly
 CSRFProtect(app)
 
 limiter = Limiter(
@@ -252,7 +254,7 @@ def public_run_code():
                 problem_memory_limit = problem.get('memory_limit', MEMORY_LIMIT)
 
         if user_input:
-            result = run_in_docker(safe_files, language, user_input, problem_time_limit, problem_memory_limit)
+            result = execute_code_locally(safe_files, language, user_input, problem_time_limit, problem_memory_limit)
             return jsonify({
                 "compiled": result.compiled, 
                 "output": result.output, 
@@ -267,7 +269,7 @@ def public_run_code():
             result["execution_time"] = round(time.time() - start_time, 3)
             return jsonify(result)
         
-        result = run_in_docker(safe_files, language, "", problem_time_limit, problem_memory_limit)
+        result = execute_code_locally(safe_files, language, "", problem_time_limit, problem_memory_limit)
         return jsonify({
             "compiled": result.compiled, 
             "output": result.output, 
@@ -335,8 +337,8 @@ def _run_tests_for_submission_with_storage(safe_files, language, testcases, user
         submission_id = store_submission(user_id, problem_id, json.dumps(safe_files), language, "AC", 0, 0, 0.0)
         return {"compiled": True, "tests": tests, "passed": 0, "total": 0, "verdict": "AC", "submission_id": submission_id}
 
-    # PHASE 1: Compilation
-    compile_result = run_in_docker(safe_files, language, "", time_limit, memory_limit)
+    # PHASE 1: Compilation (Check only once)
+    compile_result = execute_code_locally(safe_files, language, "", time_limit, memory_limit)
     if not compile_result.compiled:
         logger.info(f"Submission failed compilation for problem {problem_id}. Error: {compile_result.error}")
         submission_id = store_submission(user_id, problem_id, json.dumps(safe_files), language, "CE", 0, total, 0.0, 0, compile_result.error)
@@ -353,7 +355,7 @@ def _run_tests_for_submission_with_storage(safe_files, language, testcases, user
         expected = tc.get("expected_output", "")
         is_hidden = tc.get("is_hidden", False)
         
-        result = run_in_docker(safe_files, language, inp, time_limit, memory_limit)
+        result = execute_code_locally(safe_files, language, inp, time_limit, memory_limit)
         test_end_time = time.time()
         test_run_time = round(test_end_time - test_start_time, 3)
         total_execution_time += test_run_time
@@ -362,8 +364,13 @@ def _run_tests_for_submission_with_storage(safe_files, language, testcases, user
         test_status = "FAIL"
         
         if result.error:
-            test_status = "RE"
-            test_error = result.error
+            # If specific TLE message comes from executor
+            if "Time Limit Exceeded" in result.error:
+                test_status = "TLE"
+                test_error = "Time Limit Exceeded"
+            else:
+                test_status = "RE"
+                test_error = result.error
             if not overall_error: overall_error = test_error
         else:
             output_clean = result.output.strip().replace('\r\n', '\n')
@@ -374,8 +381,8 @@ def _run_tests_for_submission_with_storage(safe_files, language, testcases, user
             passed += 1
         else:
             if verdict == "AC":
-                if "Time Limit Exceeded" in result.error: verdict = "TLE"
-                elif "Memory Limit Exceeded" in result.error: verdict = "MLE"
+                if test_status == "TLE": verdict = "TLE"
+                elif "Memory Limit Exceeded" in (result.error or ""): verdict = "MLE"
                 elif test_status == "RE": verdict = "RE"
                 else: verdict = "WA"
             
@@ -393,7 +400,7 @@ def _run_tests_for_submission_with_storage(safe_files, language, testcases, user
     # Determine final verdict based on tests
     if passed != total and verdict == "AC": verdict = "WA"
 
-    # PHASE 3: Deployment Validation (Simulated Enterprise Check)
+    # PHASE 3: Deployment Validation
     if ENABLE_DEPLOYMENT_VALIDATION and verdict == "AC":
         deployment_success, deploy_message = simulate_deployment_validation(language)
         if not deployment_success:
@@ -418,7 +425,7 @@ def _run_tests_for_submission(safe_files, language, testcases, is_submission=Tru
     
     if total == 0: return {"compiled": True, "tests": tests, "passed": 0, "total": 0, "verdict": "AC"}
 
-    compile_result = run_in_docker(safe_files, language, "", time_limit, memory_limit)
+    compile_result = execute_code_locally(safe_files, language, "", time_limit, memory_limit)
     if not compile_result.compiled:
         return {"compiled": False, "compile_error": compile_result.error, "tests": [], "passed": 0, "total": total, "verdict": "CE"}
 
@@ -429,7 +436,7 @@ def _run_tests_for_submission(safe_files, language, testcases, is_submission=Tru
         expected = tc.get("expected_output", "")
         is_hidden = tc.get("is_hidden", False)
         
-        result = run_in_docker(safe_files, language, inp, time_limit, memory_limit)
+        result = execute_code_locally(safe_files, language, inp, time_limit, memory_limit)
         test_run_time = round(time.time() - test_start_time, 3)
         overall_execution_time += test_run_time
         

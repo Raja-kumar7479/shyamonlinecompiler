@@ -273,6 +273,69 @@
         font-family: monospace;
     }
 
+    /* --- Amazing Spinner Styles --- */
+    .amazing-spinner-wrapper {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .amazing-spinner {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 4px solid transparent;
+        border-top-color: #00ffcc; /* Bright Cyan */
+        border-right-color: #00ffcc;
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.4); /* Glow effect */
+        animation: spinner-spin 1s linear infinite;
+        z-index: 2;
+    }
+    
+    .amazing-spinner::after {
+        content: "";
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        right: 5px;
+        bottom: 5px;
+        border-radius: 50%;
+        border: 4px solid transparent;
+        border-top-color: #474bff; /* Electric Blue */
+        animation: spinner-spin-reverse 1.5s linear infinite;
+    }
+
+    .loading-text {
+        font-weight: 600;
+        letter-spacing: 1px;
+        background: linear-gradient(90deg, #00ffcc, #474bff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes spinner-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes spinner-spin-reverse {
+        0% { transform: rotate(360deg); }
+        100% { transform: rotate(0deg); }
+    }
+
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
+    /* --------------------------- */
+
     @media (max-width: 768px) {
         #compiler-page {
             flex-direction: column;
@@ -341,9 +404,12 @@
              </button>
           </li>
           
-          <li class="nav-item" id="auth-section">
-            <button id="login-btn" class="btn btn-primary-custom btn-sm px-3">
+          <li class="nav-item d-flex gap-2" id="auth-section">
+            <button id="login-btn" class="btn btn-outline-light btn-sm px-3">
                <i class="fas fa-sign-in-alt me-1"></i> Login
+            </button>
+            <button id="register-btn" class="btn btn-primary-custom btn-sm px-3">
+               <i class="fas fa-user-plus me-1"></i> Register
             </button>
           </li>
 
@@ -466,6 +532,7 @@
 
   </div>
 
+  <!-- Login Modal -->
   <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -493,6 +560,38 @@
     </div>
   </div>
 
+  <!-- Register Modal -->
+  <div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">Create Account</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="register-form">
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Username</label>
+              <input type="text" class="form-control" id="register-username" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Email (Optional)</label>
+              <input type="email" class="form-control" id="register-email">
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Password</label>
+              <input type="password" class="form-control" id="register-password" required>
+            </div>
+            <div class="alert alert-danger d-none" id="register-error"></div>
+            <div class="d-grid">
+              <button type="button" class="btn btn-primary-custom py-2" id="register-submit">Register</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     class CodeJudgeApp {
@@ -507,6 +606,7 @@
         this.authToken = null; 
         this.isResizing = false;
         this.loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+        this.registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
 
         this.initEditor(); 
         this.bindEvents(); 
@@ -543,9 +643,13 @@
         document.getElementById('font-decrease').addEventListener('click', () => this.adjustFontSize(-1));
         document.getElementById('problem-search').addEventListener('input', () => this.fetchProblems());
         document.getElementById('difficulty-filter').addEventListener('change', () => this.fetchProblems());
+        
+        // Auth Events
         document.getElementById('login-btn').addEventListener('click', () => this.loginModal.show());
+        document.getElementById('register-btn').addEventListener('click', () => this.registerModal.show());
         document.getElementById('logout-btn').addEventListener('click', () => this.logout());
         document.getElementById('login-submit').addEventListener('click', () => this.handleLogin());
+        document.getElementById('register-submit').addEventListener('click', () => this.handleRegister());
 
         document.querySelectorAll('.tab-btn').forEach(button => {
             button.addEventListener('click', (e) => this.switchResultTab(e.target.closest('.tab-btn').dataset.tab));
@@ -691,6 +795,45 @@
           }
         } catch (error) { 
             btn.disabled = false; btn.innerText = 'Login';
+        }
+      }
+
+      async handleRegister() {
+        const u = document.getElementById('register-username').value;
+        const p = document.getElementById('register-password').value;
+        const e = document.getElementById('register-email').value;
+        
+        if (!u || !p) return;
+
+        const btn = document.getElementById('register-submit');
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        const errEl = document.getElementById('register-error');
+        errEl.classList.add('d-none');
+
+        try {
+          const res = await fetch('/api/auth/register', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': this.csrfToken }, 
+            body: JSON.stringify({ username: u, password: p, email: e }) 
+          });
+          const data = await res.json();
+          btn.disabled = false; btn.innerText = 'Register';
+          
+          if (res.ok) { 
+            this.authToken = data.token; 
+            this.currentUser = data.user; 
+            localStorage.setItem('authToken', this.authToken); 
+            localStorage.setItem('currentUser', JSON.stringify(this.currentUser)); 
+            this.updateAuthUI(); 
+            this.registerModal.hide(); 
+          } else { 
+            errEl.textContent = data.error || 'Registration failed';
+            errEl.classList.remove('d-none');
+          }
+        } catch (error) { 
+            btn.disabled = false; btn.innerText = 'Register';
+            errEl.textContent = 'Network Error';
+            errEl.classList.remove('d-none');
         }
       }
 
@@ -907,7 +1050,15 @@
         } catch(e) { content.innerHTML = '<div class="text-center text-danger mt-3">Failed to load</div>'; }
       }
 
-      showLoading(msg) { document.getElementById('test-results-content').innerHTML = `<div class="d-flex justify-content-center align-items-center h-100 text-muted"><div class="text-center"><i class="fas fa-spinner fa-spin fa-2x mb-2"></i><p>${msg}</p></div></div>`; }
+      showLoading(msg) { 
+        document.getElementById('test-results-content').innerHTML = `
+        <div class="d-flex flex-column justify-content-center align-items-center h-100">
+            <div class="amazing-spinner-wrapper">
+                <div class="amazing-spinner"></div>
+            </div>
+            <p class="loading-text">${msg}</p>
+        </div>`; 
+      }
       showError(msg) { document.getElementById('test-results-content').innerHTML = `<div class="p-3 text-danger text-center">${msg}</div>`; }
       escapeHtml(t) { if(!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
     }
