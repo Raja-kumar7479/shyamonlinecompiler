@@ -3,11 +3,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_HOST = os.getenv("DB_HOST", "switchback.proxy.rlwy.net")
 DB_USER = os.getenv("DB_USER", "root")
-DB_PASS = os.getenv("DB_PASS", "rajakumar")
-DB_NAME = os.getenv("DB_NAME", "codejudge")
-DB_PORT = int(os.getenv("DB_PORT", 3306))
+DB_PASS = os.getenv("DB_PASS", "ETfOxlqXMuPmFbrWAhUCGcvhirJBMJmt")
+DB_NAME = os.getenv("DB_NAME", "railway")
+DB_PORT = int(os.getenv("DB_PORT", 19327))
 
 SECRET_KEY = os.getenv("SECRET_KEY", "your_very_strong_secret_key_here_change_in_production")
 JWT_SECRET = os.getenv("JWT_SECRET", "jwt_secret_key_change_in_production")
@@ -33,7 +33,7 @@ DOCKER_READONLY_ROOTFS = False
 
 DEPLOYMENT_ENVIRONMENTS = ["dev", "staging", "production"]
 DEFAULT_DEPLOYMENT_ENV = "dev"
-# Toggle the deployment validation check
+
 ENABLE_DEPLOYMENT_VALIDATION = os.getenv("ENABLE_DEPLOYMENT_VALIDATION", "True") == "True"
-# Minimum security score required (simulated)
+
 MIN_SECURITY_SCORE = 80
