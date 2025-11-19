@@ -38,7 +38,6 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-@app.before_first_request
 def init_resources():
    
     try:
@@ -46,6 +45,10 @@ def init_resources():
         create_pool(retries=1)
     except Exception as e:
         app.logger.warning("DB pool not ready at startup (will retry later): %s", e)
+
+# Initialize resources right after app creation and configuration
+# This replaces the deprecated @app.before_first_request
+init_resources() 
 
 @app.route("/health")
 def health():
