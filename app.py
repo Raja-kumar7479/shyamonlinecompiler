@@ -38,6 +38,26 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
+@app.before_first_request
+def init_resources():
+   
+    try:
+        from db import create_pool
+        create_pool(retries=1)
+    except Exception as e:
+        app.logger.warning("DB pool not ready at startup (will retry later): %s", e)
+
+@app.route("/health")
+def health():
+    try:
+        from db import get_conn
+        conn = get_conn()
+        conn.close()
+        return {"status":"ok"}, 200
+    except Exception as e:
+        app.logger.error("Health DB error: %s", e)
+        return {"status":"error", "detail": str(e)}, 503
+
 CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 VALID_LANGUAGES = {"java", "python", "c", "cpp", "javascript", "csharp"}
