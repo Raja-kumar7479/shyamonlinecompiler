@@ -1,36 +1,73 @@
-import mysql.connector
-from mysql.connector import pooling, Error
-from config import DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT
+# db.py (REPLACE ENTIRE FILE)
+import os
+import time
 import json
 import logging
 from datetime import datetime
+from mysql.connector import pooling, Error
 
-cnxpool = None
+from config import DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT
 
-try:
-    cnxpool = pooling.MySQLConnectionPool(
-        pool_name="mypool",
-        pool_size=32,
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASS,
-        database=DB_NAME,
-        port=DB_PORT,
-        autocommit=True,
-        pool_reset_session=True
-    )
-except Error as e:
-    logging.error(f"Error creating connection pool: {e}")
-    raise
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+POOL_NAME = os.getenv("DB_POOL_NAME", "mypool")
+POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "2")) 
+
+_cnxpool = None
+
+def create_pool(retries: int = 3, backoff_seconds: int = 1):
+    """
+    Lazily create the MySQL connection pool. Retries with exponential backoff.
+    """
+    global _cnxpool
+    if _cnxpool is not None:
+        return _cnxpool
+
+    last_exc = None
+    for attempt in range(retries):
+        try:
+            _cnxpool = pooling.MySQLConnectionPool(
+                pool_name=POOL_NAME,
+                pool_size=POOL_SIZE,
+                host=DB_HOST,
+                user=DB_USER,
+                password=DB_PASS,
+                database=DB_NAME,
+                port=DB_PORT,
+                autocommit=True,
+                pool_reset_session=True
+            )
+            # smoke test
+            conn = _cnxpool.get_connection()
+            conn.close()
+            logger.info("DB pool created")
+            return _cnxpool
+        except Error as e:
+            last_exc = e
+            wait = backoff_seconds * (2 ** attempt)
+            logger.warning(f"DB pool creation attempt {attempt+1}/{retries} failed: {e}; retrying in {wait}s")
+            time.sleep(wait)
+
+    logger.error("Could not create DB pool after retries")
+    raise RuntimeError("Could not create DB pool") from last_exc
 
 def get_conn():
-    if not cnxpool:
-        raise Exception("Database connection pool not initialized")
+    """
+    Return a connection from the pool. Create the pool if needed.
+    """
+    global _cnxpool
+    if _cnxpool is None:
+        create_pool()
     try:
-        return cnxpool.get_connection()
+        return _cnxpool.get_connection()
     except Error as e:
-        logging.error(f"Error getting connection from pool: {e}")
-        raise
+        logger.error(f"Error getting connection from pool: {e}")
+        # try once to re-create pool and retry
+        _cnxpool = None
+        create_pool()
+        return _cnxpool.get_connection()
 
 def get_user_by_username(username):
     conn = get_conn()
@@ -83,13 +120,15 @@ def fetch_problem_by_slug(slug):
             for field in ['examples', 'constraints']:
                 if problem.get(field):
                     try:
-                        # Handle JSON stored as string/bytes
-                        if isinstance(problem[field], str): problem[field] = json.loads(problem[field])
-                        elif isinstance(problem[field], (bytes, bytearray)): problem[field] = json.loads(problem[field].decode('utf-8'))
-                    except (json.JSONDecodeError, TypeError): 
-                        logging.warning(f"Could not decode JSON for problem {problem['id']} field {field}")
+                        if isinstance(problem[field], str):
+                            problem[field] = json.loads(problem[field])
+                        elif isinstance(problem[field], (bytes, bytearray)):
+                            problem[field] = json.loads(problem[field].decode('utf-8'))
+                    except (json.JSONDecodeError, TypeError):
+                        logger.warning(f"Could not decode JSON for problem {problem['id']} field {field}")
                         problem[field] = []
-                else: problem[field] = []
+                else:
+                    problem[field] = []
             problem['testcases'] = testcases
         return problem
     finally:
@@ -110,11 +149,11 @@ def fetch_problems_page(page, page_size, difficulty=None, search=None):
             query_base += " AND (title LIKE %s OR slug LIKE %s)"
             search_term = f"%{search}%"
             params.extend([search_term, search_term])
-        
+
         count_query = "SELECT COUNT(*) as cnt " + query_base
         cur.execute(count_query, tuple(params))
         total = cur.fetchone()['cnt']
-        
+
         query = "SELECT id, title, slug, difficulty " + query_base + " ORDER BY id LIMIT %s OFFSET %s"
         params.extend([page_size, offset])
         cur.execute(query, tuple(params))
@@ -132,7 +171,7 @@ def store_submission(user_id, problem_id, code, language, verdict, passed, total
         return cur.lastrowid
     except Error as e:
         conn.rollback()
-        logging.error(f"DB Error storing submission: {e}")
+        logger.error(f"DB Error storing submission: {e}")
         raise
     finally:
         cur.close()
@@ -145,7 +184,7 @@ def store_submission_testcase(submission_id, testcase_id, status, execution_time
         cur.execute("INSERT INTO submission_testcases (submission_id, testcase_id, status, execution_time, memory_used, output, error_message) VALUES (%s, %s, %s, %s, %s, %s, %s)", (submission_id, testcase_id, status, execution_time, memory_used, output, error_message))
     except Error as e:
         conn.rollback()
-        logging.error(f"DB Error storing submission testcase: {e}")
+        logger.error(f"DB Error storing submission testcase: {e}")
         raise
     finally:
         cur.close()
