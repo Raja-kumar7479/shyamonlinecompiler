@@ -1,73 +1,32 @@
-
 import os
-import time
 import json
 import logging
 from datetime import datetime
-from mysql.connector import pooling, Error
+import mysql.connector
+from mysql.connector import Error
 
 from config import DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-POOL_NAME = os.getenv("DB_POOL_NAME", "mypool")
-POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "2")) 
-
-_cnxpool = None
-
-def create_pool(retries: int = 3, backoff_seconds: int = 1):
-    """
-    Lazily create the MySQL connection pool. Retries with exponential backoff.
-    """
-    global _cnxpool
-    if _cnxpool is not None:
-        return _cnxpool
-
-    last_exc = None
-    for attempt in range(retries):
-        try:
-            _cnxpool = pooling.MySQLConnectionPool(
-                pool_name=POOL_NAME,
-                pool_size=POOL_SIZE,
-                host=DB_HOST,
-                user=DB_USER,
-                password=DB_PASS,
-                database=DB_NAME,
-                port=DB_PORT,
-                autocommit=True,
-                pool_reset_session=True
-            )
-            # smoke test
-            conn = _cnxpool.get_connection()
-            conn.close()
-            logger.info("DB pool created")
-            return _cnxpool
-        except Error as e:
-            last_exc = e
-            wait = backoff_seconds * (2 ** attempt)
-            logger.warning(f"DB pool creation attempt {attempt+1}/{retries} failed: {e}; retrying in {wait}s")
-            time.sleep(wait)
-
-    logger.error("Could not create DB pool after retries")
-    raise RuntimeError("Could not create DB pool") from last_exc
-
 def get_conn():
     """
-    Return a connection from the pool. Create the pool if needed.
+    Return a new direct connection to the MySQL database.
     """
-    global _cnxpool
-    if _cnxpool is None:
-        create_pool()
     try:
-        return _cnxpool.get_connection()
+        connection = mysql.connector.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASS,
+            database=DB_NAME,
+            port=DB_PORT,
+            autocommit=True
+        )
+        return connection
     except Error as e:
-        logger.error(f"Error getting connection from pool: {e}")
-        # try once to re-create pool and retry
-        _cnxpool = None
-        create_pool()
-        return _cnxpool.get_connection()
+        logger.error(f"Error connecting to database: {e}")
+        raise
 
 def get_user_by_username(username):
     conn = get_conn()

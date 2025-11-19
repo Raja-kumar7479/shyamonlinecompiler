@@ -30,8 +30,7 @@ DEFAULT_RATE_LIMIT = os.getenv("DEFAULT_RATE_LIMIT", "1000 per hour")
 DOCKER_NETWORK_DISABLED = False
 DOCKER_READONLY_ROOTFS = False
 
-# --- Deployment Phase Configuration ---
-# Simulate a multi-stage environment for enterprise feel
+
 DEPLOYMENT_ENVIRONMENTS = ["dev", "staging", "production"]
 DEFAULT_DEPLOYMENT_ENV = "dev"
 # Toggle the deployment validation check
