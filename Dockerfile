@@ -1,24 +1,38 @@
-# Use a lightweight base image for Python 3.11
+# Dockerfile - improved for Render + Gunicorn + safer defaults
 FROM python:3.11-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV FLASK_APP app.py
+# --- Environment ---
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    FLASK_APP=app.py \
+    PORT=5000
 
-# Set the working directory
+# Install any system deps needed by some Python packages (adjust if not needed)
+# Keep minimal to reduce image size
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    default-libmysqlclient-dev \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /usr/src/app
 
-# Copy and install dependencies
+# Copy requirements and install (pip as root during build is fine)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --upgrade pip \
+ && pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
+# Copy application code
 COPY . .
 
-# Expose the port (Flask/Gunicorn default is 5000)
-EXPOSE 5000
+# Create a non-root user and give ownership (optional, but removes pip root warning at runtime)
+RUN groupadd --system app && useradd --system --gid app --create-home app \
+ && chown -R app:app /usr/src/app
 
-# Run the application using Gunicorn
-# The --workers are set dynamically (2*CPU + 1 is a common formula)
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+USER app
+
+# Expose the port (Render will override $PORT at runtime)
+EXPOSE ${PORT}
+
+# Run gunicorn binding to the PORT environment variable that Render sets.
+# We increase timeout and use a small worker count appropriate for small instances.
+CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:${PORT} --workers 2 --threads 2 --timeout 120 --access-logfile - --error-logfile -"]
