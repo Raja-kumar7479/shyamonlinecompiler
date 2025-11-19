@@ -17,8 +17,6 @@ class ExecutionResult:
         self.execution_time = execution_time
 
 def run_in_docker(code_files: dict, language: str, stdin_data: str = "", time_limit: int = RUN_TIMEOUT, memory_limit: str = "256m"):
-    # NOTE: This function now runs code LOCALLY using subprocess (No Docker)
-    
     with tempfile.TemporaryDirectory() as temp_dir:
         # 1. Determine Main File and Write Code
         main_file = ""
@@ -27,7 +25,6 @@ def run_in_docker(code_files: dict, language: str, stdin_data: str = "", time_li
             with open(file_path, 'w') as f:
                 f.write(content)
             
-            # Identify the entry point file
             if language == "python" and filename == "app.py": main_file = "app.py"
             elif language == "java" and filename == "Main.java": main_file = "Main.java"
             elif language == "c" and filename == "main.c": main_file = "main.c"
@@ -38,8 +35,6 @@ def run_in_docker(code_files: dict, language: str, stdin_data: str = "", time_li
         if not main_file:
              return ExecutionResult(error="Main file not found or unsupported language configuration.")
 
-        # 2. Define Compile and Run Commands
-        # Format: [ [Compile Command], [Run Command] ] or just [ [Run Command] ]
         commands = {
             "python": [[f"python3 {main_file}"]],
             "javascript": [[f"node {main_file}"]],
@@ -57,7 +52,6 @@ def run_in_docker(code_files: dict, language: str, stdin_data: str = "", time_li
         try:
             start_time = time.time()
             
-            # 3. Compile Phase (if applicable)
             if len(cmds) > 1:
                 compile_cmd = cmds[0]
                 compile_proc = subprocess.run(
@@ -68,8 +62,7 @@ def run_in_docker(code_files: dict, language: str, stdin_data: str = "", time_li
                 run_cmd = cmds[1]
             else:
                 run_cmd = cmds[0]
-
-            # 4. Execution Phase
+                
             run_proc = subprocess.run(
                 run_cmd,
                 cwd=temp_dir,
@@ -102,6 +95,5 @@ def run_in_docker(code_files: dict, language: str, stdin_data: str = "", time_li
         except Exception as e:
             return ExecutionResult(success=False, error=f"System Error: {str(e)}")
 
-# Stub for the deployment validation function since we removed the other file deps
 def simulate_deployment_validation(language):
     return True, "Validation Skipped"
