@@ -1,34 +1,29 @@
-# Dockerfile - improved for Render + Gunicorn + safer defaults
 FROM python:3.11-slim
 
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    FLASK_APP=app.py \
-    PORT=5000
-
-
+# 1. Install compilers for all supported languages
+# build-essential (C/C++), default-jdk (Java), nodejs/npm (JS), mono-complete (C#)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    default-libmysqlclient-dev \
-  && rm -rf /var/lib/apt/lists/*
+    gcc \
+    g++ \
+    default-jdk \
+    nodejs \
+    npm \
+    mono-complete \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-
+# 2. Install Python dependencies
 COPY requirements.txt .
-RUN python -m pip install --upgrade pip \
- && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-
+# 3. Copy application code
 COPY . .
 
-RUN groupadd --system app && useradd --system --gid app --create-home app \
- && chown -R app:app /usr/src/app
+# 4. Create a non-root user (Render requirement for best practice)
+RUN useradd -m appuser
+USER appuser
 
-USER app
-
-EXPOSE ${PORT}
-
-CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:${PORT} --workers 1 --threads 2 --timeout 120 --access-logfile - --error-logfile -"]
-
+# 5. Run the application
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000", "--timeout", "120"]
