@@ -159,6 +159,4 @@ INSERT INTO testcases (problem_id, input_text, expected_output, is_hidden, execu
     (LAST_INSERT_ID(), '123454321', 'true', 1, 5),
     (LAST_INSERT_ID(), '123456', 'false', 1, 6); [cite: 23]
 
-
-# Run the Flask application
 python app.py
